@@ -1,0 +1,12 @@
+{% include 'header.jinja' %}
+
+'''
+{{ spec['x-important'] }}
+'''
+
+openapi_version = '{{ spec['openapi'] }}'
+server_url = '{{ spec['servers'][0]['url'] }}'
+
+{{ spec['info']['x-platform'] }}_title = '{{ spec['info']['title'] }}'
+{{ spec['info']['x-platform'] }}_version = '{{ spec['info']['version'] }}'
+

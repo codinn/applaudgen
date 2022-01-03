@@ -1,0 +1,9 @@
+def include(self, relationship: Union[Include, list[Include]]) -> {{ endpoint_class }}:
+    '''Relationship data to include in the response.
+
+    :returns: self
+    :rtype: applaud.endpoints.{{ endpoint_class }}
+    '''
+    if relationship: self._set_includes(relationship if type(relationship) is list else [relationship])
+    return self
+    

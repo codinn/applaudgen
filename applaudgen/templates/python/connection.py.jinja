@@ -1,0 +1,76 @@
+{% include 'header.jinja' %}
+
+{% macro expand_params(params) -%}
+    {%- for p in params -%}
+        , {{ p.name }}: {{ p.type -}}
+    {% endfor -%}
+{%- endmacro -%}
+
+{%- macro pass_params(params) -%}
+    {%- for p in params -%}
+        {{- p.name -}}, {% if loop.last%}{% endif -%}
+    {%- endfor -%}
+    self.session
+{%- endmacro -%}
+import datetime
+from .endpoints import *
+import requests
+from authlib.jose import jwt
+
+class Connection:
+    """
+    Connection to the App Store Connect.
+    """
+
+    base_url = 'https://api.appstoreconnect.apple.com'
+
+    def __init__(self, issuer_id: str, key_id: str, private_key: str):
+        self._s = requests.Session()
+        self.key_id = key_id
+        self.issuer_id = issuer_id
+        self.private_key = private_key
+
+        self.__gen_auth_header()
+
+    def __gen_auth_header(self):
+        # Creates a token that lives for 20 minutes, which should be long enough
+        # to upload the app preview. In a long-running script, adjust the code to
+        # issue a new token periodically.
+        self._auth_header_timestamp = datetime.datetime.utcnow()
+        expiry = datetime.datetime.utcnow() + datetime.timedelta(minutes=20)
+
+        token = jwt.encode(
+            {
+                "alg": "ES256",
+                "kid": self.key_id,
+                "typ": "JWT"
+            },
+            {
+                "iss": self.issuer_id,
+                "exp": expiry,
+                "aud": "appstoreconnect-v1"
+            },
+            self.private_key
+        )
+
+        # Create an Authorization header value with bearer token (JWT).
+        # The token is set to expire in 20 minutes, and is used for all App Store
+        # Connect API calls.
+        self._s.headers['Authorization'] = 'Bearer ' + token.decode()
+    
+    @property
+    def session(self):
+        expiring = self._auth_header_timestamp + datetime.timedelta(minutes=15) < datetime.datetime.utcnow()
+        # generate a new token every 15 minutes
+        if expiring or ('Authorization' not in self._s.headers):
+            self.__gen_auth_header()
+
+        return self._s
+
+    # Shortcuts for root endpoints
+
+{% for res in endpoints %}
+    def {{ res.method|snake_case }}(self {{- expand_params(res.params) }}) -> {{ res.class_name }}:
+        return {{ res.class_name }}({{- pass_params(res.params) }})
+    
+{% endfor %}

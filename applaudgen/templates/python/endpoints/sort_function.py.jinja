@@ -1,0 +1,18 @@
+{%- macro qualifiers_params(names) %}
+{%- for name in names -%}
+, {{ name|simple_singular|snake_case }}: SortOrder=None
+{%- endfor -%}
+{%- endmacro -%}
+
+def sort(self, *{{ qualifiers_params(qualifiers) }}) -> {{ endpoint_class }}:
+    '''Attributes by which to sort.
+
+    :returns: self
+    :rtype: applaud.endpoints.{{ endpoint_class }}
+    '''
+    {% for name in qualifiers %}
+    {% set param_name = name|simple_singular|snake_case %}
+    if {{ param_name }}: self.sort_expressions.append('{{ name}}' if {{ param_name }} == SortOrder.ASC else '-{{ name }}')
+    {% endfor %}
+    return self
+    

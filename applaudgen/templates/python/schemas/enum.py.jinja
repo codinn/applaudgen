@@ -1,0 +1,4 @@
+class {{name}}(StringEnum):
+    {% for value in values %}
+    {{value}} = '{{value}}'
+    {% endfor %}

@@ -1,0 +1,27 @@
+{%- macro filter_params(filter_tuples) %}
+{%- for name, type_name, required, comment in filter_tuples -%}
+{% set param_name = name|snake_case %}
+, {{ param_name }}: {{ type_name }}{% if not required %}=None{% endif %}
+{%- endfor -%}
+{%- endmacro -%}
+
+def filter(self, *{{ filter_params(filter_tuples) }}) -> {{ endpoint_class }}:
+    '''Attributes, relationships, and IDs by which to filter.
+{% for name, type_name, required, comment in filter_tuples %}
+
+    {% set param_name = name|snake_case %}
+    :param {{ param_name }}: {{ comment }}
+    :type {{ param_name }}: {{ type_name }}{% if not required %} = None{% endif %}
+
+{% endfor %}
+
+    :returns: self
+    :rtype: applaud.endpoints.{{ endpoint_class }}
+    '''
+    {% for name, type_name, required, comment in filter_tuples %}
+    {% set param_name = name|snake_case %}
+    if {{ param_name }}: self._set_filter('{{ name }}', {{ param_name }} if type({{ param_name }}) is list else [{{ param_name }}])
+    
+    {% endfor %}
+    return self
+    

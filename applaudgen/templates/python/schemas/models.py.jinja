@@ -1,0 +1,38 @@
+{% include 'header.jinja' %}
+
+from pydantic import BaseModel, AnyUrl, EmailStr
+from deprecated import deprecated
+from .enums import *
+from typing import Optional, Literal
+import re
+import datetime
+
+def _camelcase(string):
+    """ Convert string into camel case.
+
+    Args:
+        string: String to convert.
+
+    Returns:
+        string: Camel case string.
+
+    """
+
+    string = re.sub(r"^[\-_\.]", '', str(string))
+    if not string:
+        return string
+    return (str(string[0]).lower()
+            + re.sub(r"[\-_\.\s]([a-z])",
+                    lambda matched: str(matched.group(1)).upper(),
+                    string[1:]))
+
+class ApplaudModel(BaseModel):
+    class Config:
+        alias_generator = _camelcase
+        underscore_attrs_are_private = True
+        allow_population_by_field_name = True
+
+{% for schema in schemas %}
+{{ schema }}
+{% endfor %}
+

@@ -1,0 +1,11 @@
+{% include 'header.jinja' %}
+
+from .schemas.enums import StringEnum
+
+{% for name, values in fields_enums.items() %}
+class {{ name|simple_singular|capfirst }}Field(StringEnum):
+    {% for value in values %}
+    {{ value|snake_case|upper }} = '{{value}}'
+    {% endfor %}
+
+{% endfor %}

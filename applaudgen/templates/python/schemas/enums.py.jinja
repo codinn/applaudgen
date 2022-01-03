@@ -1,0 +1,35 @@
+{% include 'header.jinja' %}
+
+from enum import Enum
+
+class StringEnum(str, Enum):
+    """
+    Making Enums (as always, arguably) more Pythonic:
+    https://www.cosmicpython.com/blog/2020-10-27-i-hate-enums.html
+    """
+    def __str__(self) -> str:
+        return str.__str__(self)
+
+class FinanceReportType(StringEnum):
+    FINANCIAL = "FINANCIAL"
+    FINANCE_DETAIL = "FINANCE_DETAIL"
+
+class SalesReportType(StringEnum):
+    SALES = "SALES"
+    PRE_ORDER = "PRE_ORDER"
+    NEWSSTAND = "NEWSSTAND"
+    SUBSCRIPTION = "SUBSCRIPTION"
+    SUBSCRIPTION_EVENT = "SUBSCRIPTION_EVENT"
+    SUBSCRIBER = "SUBSCRIBER"
+
+class SalesReportSubType(StringEnum):
+    SUMMARY = "SUMMARY"
+    DETAILED = "DETAILED"
+
+{% for name, values in enums.items() %}
+class {{name}}(StringEnum):
+    {% for value in values %}
+    {{value}} = '{{value}}'
+    {% endfor %}
+    
+{% endfor %}

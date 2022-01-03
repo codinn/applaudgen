@@ -1,0 +1,26 @@
+{%- macro fields_params(fields_tuples) %}
+{%- for name, comment in fields_tuples -%}
+{% set fields_type =  name|simple_singular|capfirst + 'Field' -%}
+, {{ name|simple_singular|snake_case }}: Union[{{ fields_type }}, list[{{ fields_type }}]]=None
+{%- endfor -%}
+{%- endmacro -%}
+
+def fields(self, *{{ fields_params(fields_tuples) }}) -> {{ endpoint_class }}:
+    '''Fields to return for included related types.
+{% for field_name, comment in fields_tuples %}
+    {% set param_name = field_name|simple_singular|snake_case %}
+    {% set fields_type =  field_name|simple_singular|capfirst + 'Field' %}
+
+    :param {{ param_name }}: {{ comment }}
+    :type {{ param_name }}: Union[{{ fields_type }}, list[{{ fields_type }}]] = None
+{% endfor %}
+
+    :returns: self
+    :rtype: applaud.endpoints.{{ endpoint_class }}
+    '''
+    {% for field_name, comment in fields_tuples %}
+    {% set param_name = field_name|simple_singular|snake_case %}
+    if {{ param_name }}: self._set_fields('{{ field_name }}',{{ param_name }} if type({{ param_name }}) is list else [{{ param_name }}])
+    {% endfor %}
+    return self
+    

@@ -1,0 +1,21 @@
+{%- macro exists_params(names) %}
+{%- for name in names -%}
+, {{ name|snake_case }}: bool=None
+{%- endfor -%}
+{%- endmacro -%}
+
+def exists(self, *{{ exists_params(exists_names) }}) -> {{ endpoint_class }}:
+    ''' Filter by existence or non-existence of related resource.
+    
+    :returns: self
+    :rtype: applaud.endpoints.{{ endpoint_class }}
+    '''
+    {% for name in exists_names %}
+    {% set param_name = name|snake_case %}
+    if {{ param_name }} == None:
+        return
+    
+    self._set_exists('{{ name }}', 'true' if {{ param_name }}  else 'false')
+    {% endfor %}
+    return self
+    

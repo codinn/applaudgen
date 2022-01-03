@@ -1,0 +1,13 @@
+{% if deprecated %}
+@deprecated
+{% endif %}
+class {{ name }}(ApplaudModel):
+{% for subclass in nested_classes %}
+    {{ subclass|indent(4) }}
+{% endfor %}
+{% for subenum in nested_enums %}
+    {{ subenum|indent(4) }}
+{% endfor %}
+{% for attr in attributes %}
+    {{ attr }}
+{% endfor %}

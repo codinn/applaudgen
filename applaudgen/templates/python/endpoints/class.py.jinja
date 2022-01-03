@@ -1,0 +1,189 @@
+from __future__ import annotations
+from .base import Endpoint, IDEndpoint, SortOrder
+from ..fields import *
+from typing import Union
+from pydantic import parse_obj_as
+from ..schemas.models import *
+from ..schemas.responses import *
+from ..schemas.requests import *
+from ..schemas.enums import *
+
+{% macro operation_params(op) %}
+{%- if op.request_single_instance != None %}
+, request: {{ op.request_type }}
+{%- endif -%}
+{%- endmacro -%}
+
+{% for endpoint in endpoints %}
+class {{endpoint.class_name}}({% if endpoint.has_id_param %}IDEndpoint{% else %}Endpoint{% endif %}):
+    path = '{{endpoint.path}}'
+
+    {% if endpoint.enums|count > 0 %}
+        {% for name, values in endpoint.enums.items() %}
+    class {{name}}(StringEnum):
+            {% for value in values %}
+        {{value}} = '{{value}}'
+            {% endfor %}
+
+        {% endfor %}
+    {% endif %}
+
+    {%- if endpoint.fields_function_code %}
+    {{ endpoint.fields_function_code|indent(4) }}
+    {% endif %}
+
+    {%- if endpoint.include_names|count > 0 %}
+    class Include(StringEnum):
+        {% for include_name in endpoint.include_names %}
+        {{include_name|snake_case|upper}} = '{{include_name}}'
+        {% endfor %}
+
+    {% endif %}
+
+    {%- if endpoint.exists_function_code %}
+    {{ endpoint.exists_function_code|indent(4) }}
+    {% endif -%}
+
+    {%- if endpoint.filter_function_code %}
+    {{ endpoint.filter_function_code|indent(4) }}
+    {% endif %}
+
+    {%- if endpoint.include_function_code %}
+    {{ endpoint.include_function_code|indent(4) }}
+    {% endif -%}
+
+    {%- if endpoint.sort_function_code %}
+    {{ endpoint.sort_function_code|indent(4) }}
+    {% endif -%}
+
+    {%- if endpoint.limit_function_code %}
+    {{ endpoint.limit_function_code|indent(4) }}
+    {% endif -%}
+
+    {%- if endpoint.operation_get %}
+        {% set op = endpoint.operation_get %}
+        {% if op.deprecated %}
+    @deprecated
+        {% endif %}
+    def get(self) -> {{ op.response_type }}:
+        '''
+        {%- if op.response_single_instance == False -%}
+        Get one or more resources.
+        {% else -%}
+        Get the resource.
+        {% endif %}
+
+        :returns: {{ op.response_comment }}
+        :rtype: {{ op.response_type }}
+        :raises: :py:class:`applaud.schemas.responses.ErrorResponse`: if a error reponse returned.
+                 :py:class:`requests.RequestException`: if a connection or a HTTP error occurred.
+        '''
+        json = super()._perform_get()
+        return {{op.response_type}}.parse_obj(json)
+
+    {% endif -%}
+
+    {%- if endpoint.operation_post %}
+        {% set op = endpoint.operation_post %}
+        {% if op.deprecated %}
+    @deprecated
+        {% endif %}
+    def create(self{{ operation_params(op) }}){% if op.response_type != None %} -> {{ op.response_type }}{% endif %}:
+        '''
+        {%- if op.request_single_instance == False -%}
+        Create one or more related linkages.
+
+        {% else -%}
+        Create the resource.
+
+        {% endif -%}
+
+        {% if op.request_type != None %}
+        :param request: {{ op.request_comment }}
+        :type request: {{ op.request_type }}
+        {% endif %}
+
+        {% if op.response_type != None %}
+        :returns: {{ op.response_comment }}
+        :rtype: {{ op.response_type }}
+        {% endif %}
+        :raises: :py:class:`applaud.schemas.responses.ErrorResponse`: if a request or a HTTP error occurred.
+        '''
+        json = request.dict(by_alias=True, exclude_none=True)
+        {% if op.response_type != None %}
+        response_json = super()._perform_post(json)
+        return {{op.response_type}}.parse_obj(response_json)
+        {% else %}
+        super()._perform_post(json)
+        {% endif %}
+
+    {% endif -%}
+
+    {%- if endpoint.operation_patch %}
+        {% set op = endpoint.operation_patch %}
+        {% if op.deprecated %}
+    @deprecated
+        {% endif %}
+    def update(self{{ operation_params(op) }}){% if op.response_type != None %} -> {{ op.response_type }}{% endif %}:
+        '''
+        {%- if op.request_single_instance == False -%}
+        Modify one or more related linkages.
+
+        {% else -%}
+        Modify the resource.
+
+        {% endif -%}
+
+        {% if op.request_type != None %}
+        :param request: {{ op.request_comment }}
+        :type request: {{ op.request_type }}
+        {% endif %}
+
+        {% if op.response_type != None %}
+        :returns: {{ op.response_comment }}
+        :rtype: {{ op.response_type }}
+        {% endif %}
+        :raises: :py:class:`applaud.schemas.responses.ErrorResponse`: if a request or a HTTP error occurred.
+        '''
+        json = request.dict(by_alias=True, exclude_none=True)
+        {% if op.response_type != None %}
+        response_json = super()._perform_patch(json)
+        return {{op.response_type}}.parse_obj(response_json)
+        {% else %}
+        super()._perform_patch(json)
+        {% endif %}
+
+    {% endif -%}
+
+    {%- if endpoint.operation_delete %}
+        {% set op = endpoint.operation_delete %}
+        {% if op.deprecated %}
+    @deprecated
+        {% endif %}
+    def delete(self{{ operation_params(op) }}):
+        '''
+        {%- if op.request_single_instance == False -%}
+        Delete one or more related linkages.
+
+        {% else -%}
+        Delete the resource.
+
+        {% endif -%}
+
+        {% if op.request_type != None %}
+        :param request: {{ op.request_comment }}
+        :type request: {{ op.request_type }}
+
+        {% endif %}
+        :raises: :py:class:`applaud.schemas.responses.ErrorResponse`: if a request or a HTTP error occurred.
+        '''
+        {% if op.request_type == None %}
+        super()._perform_delete()
+        {% else %}
+        json = request.dict(by_alias=True, exclude_none=True)
+        super()._perform_delete(json)
+        {% endif %}
+
+    {% endif -%}
+    
+{% endfor %}

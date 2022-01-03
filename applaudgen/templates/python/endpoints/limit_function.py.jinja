@@ -1,0 +1,61 @@
+{%- macro limit_params(limit_tuples) %}
+    {%- if limit_tuples[0][0] == 'default-limit' -%}
+        number: int=None
+        {%- set limit_tuples = limit_tuples[1:] -%}
+            {%- if limit_tuples|count > 0 -%}
+                , *
+            {%- endif -%}
+    {%- else -%}
+        *
+    {%- endif -%}
+
+    {%- if limit_tuples|count > 0 %}
+        {%- for name, maximum, comment in limit_tuples -%}
+        , {{ name|snake_case }}: int=None
+        {%- endfor -%}
+    {% endif %}
+{%- endmacro -%}
+
+def limit(self, {{ limit_params(limit_tuples) }}) -> {{ endpoint_class }}:
+    '''
+{%- if limit_tuples[0][0] == 'default-limit' %}
+    {% if limit_tuples|count == 1 %}
+Number of resources to return.
+    {% else %}
+Number of resources or included related resources to return.
+    {% endif %}
+
+    :param number: {{ limit_tuples[0][2] }}. The maximum limit is {{ limit_tuples[0][1] }}
+    :type number: int = None
+    {% set remain_tuples = limit_tuples[1:] %}
+{% else %}
+Number of included related resources to return.
+{% set remain_tuples = limit_tuples %}
+{% endif %}
+
+{%- for name, maximum, comment in remain_tuples %}
+    {% set var_name = name|snake_case %}
+
+    :param {{ var_name }}: {{ comment }}. The maximum limit is {{ maximum }}
+    :type {{ var_name }}: int = None
+{% endfor %}
+
+    :returns: self
+    :rtype: applaud.endpoints.{{ endpoint_class }}
+    '''
+    {% if limit_tuples[0][0] == 'default-limit' %}
+    if number and number > {{ limit_tuples[0][1] }}:
+        raise ValueError(f'The maximum limit of default-limit is {{ limit_tuples[0][1] }}')
+    if number: self._set_limit('default-limit', number)
+        {% set limit_tuples = limit_tuples[1:] %}
+    
+    {% endif %}
+
+    {%- for name, maximum, comment in limit_tuples %}
+        {% set var_name = name|snake_case %}
+    if {{ var_name }} and {{ var_name }} > {{ maximum }}:
+        raise ValueError(f'The maximum limit is {{ maximum }}')
+    if {{ var_name }}: self._set_limit('{{ name }}', {{ name|snake_case }})
+
+    {% endfor %}
+    return self

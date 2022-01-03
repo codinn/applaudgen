@@ -1,0 +1,11 @@
+{% include 'header.jinja' %}
+
+from deprecated import deprecated
+from .enums import *
+from .models import *
+from typing import Optional, Literal
+import datetime
+
+{% for schema in schemas %}
+{{ schema }}
+{% endfor %}
