@@ -95,12 +95,11 @@ class SchemaClassBuilder(ABC):
             values=values
         )
 
-    def __parse_property_type(self, property_name: str, property_dict: dict) -> tuple[str, str, str]:
+    def __parse_property_type(self, property_name: str, property_dict: dict) -> tuple[str, str]:
         if '$ref' in property_dict:
-            return (property_dict['$ref'].split('/')[-1], None, None)
+            return (property_dict['$ref'].split('/')[-1], None)
         else:
             default_value = None
-            discriminator = None
             property_type = property_dict.get('type', None)
             parent_name = f'{self.parent}.{self.name}' if self.parent else self.name
 
@@ -173,7 +172,6 @@ class SchemaClassBuilder(ABC):
                     # included field, discriminator is `type` attribute of contained object
                     union_types = [ref['$ref'].split('/')[-1] for ref in items['oneOf'] if '$ref' in ref]
                     property_type = self.list_type_code(union_types)
-                    discriminator = 'type'
                 else:
                     assert False, f'Not supported array type ({items}) in class {self.name}'
             elif 'oneOf' in property_dict:
@@ -185,7 +183,7 @@ class SchemaClassBuilder(ABC):
                 property_type = self.canonical_type_code(property_type, type_format)
                 # assert False, f'Cannot handle type ({property_type}) in class {self.name}'
 
-            return (property_type, default_value, discriminator)
+            return (property_type, default_value)
 
     def build(self) -> str:
         if 'enum' in self.fields.keys():
@@ -207,9 +205,9 @@ class SchemaClassBuilder(ABC):
             property_dict = properties[property_name]
             is_required = property_name in required_property_names
 
-            property_type, default_value, discriminator = self.__parse_property_type(property_name, property_dict)
+            property_type, default_value = self.__parse_property_type(property_name, property_dict)
 
-            self.attributes.append(self.build_attribute_code(property_name, property_type, is_required, default_value, discriminator))
+            self.attributes.append(self.build_attribute_code(property_name, property_type, is_required, default_value))
 
         return self.jinja_env.get_template(f'{self.template_name}.jinja').render(
             name=self.name,
