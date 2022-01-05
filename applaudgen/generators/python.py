@@ -44,11 +44,12 @@ class PythonSchemaClassBuilder(SchemaClassBuilder):
     def canonical_type_code(self, type: str, format: str = None) -> str:
         return _canonical_type_code(type, format)
 
-    def build_attribute_code(self, name: str, type: str, is_required: bool, default_value: str) -> str:
+    def build_attribute_code(self, name: str, type: str, is_required: bool, default_value: str, is_deprecated: bool) -> str:
         name = snake_case(name)
 
         if default_value is None:
-            return f'{name}: {type}' if is_required else f'{name}: Optional[{type}]'
+            deprecated_suffix = ' = Field(None, deprecated=True)' if is_deprecated else ''
+            return f'{name}: {type}' if is_required else f'{name}: Optional[{type}]' + deprecated_suffix
 
         return f'{name}: Literal[{default_value}] = {default_value}'
 

@@ -45,7 +45,7 @@ class SchemaClassBuilder(ABC):
         pass
 
     @abstractmethod
-    def build_attribute_code(self, name: str, type: str, is_required: bool, default_value: str) -> tuple[str, str]:
+    def build_attribute_code(self, name: str, type: str, is_required: bool, default_value: str, is_deprecated: bool) -> tuple[str, str]:
         pass
 
     __trace_enum_map = {
@@ -95,9 +95,11 @@ class SchemaClassBuilder(ABC):
             values=values
         )
 
-    def __parse_property_type(self, property_name: str, property_dict: dict) -> tuple[str, str]:
+    def __parse_property_type(self, property_name: str, property_dict: dict) -> tuple[str, str, bool]:
+        deprecated = property_dict.get('deprecated', False)
+
         if '$ref' in property_dict:
-            return (property_dict['$ref'].split('/')[-1], None)
+            return (property_dict['$ref'].split('/')[-1], None, deprecated)
         else:
             default_value = None
             property_type = property_dict.get('type', None)
@@ -183,7 +185,7 @@ class SchemaClassBuilder(ABC):
                 property_type = self.canonical_type_code(property_type, type_format)
                 # assert False, f'Cannot handle type ({property_type}) in class {self.name}'
 
-            return (property_type, default_value)
+            return (property_type, default_value, deprecated)
 
     def build(self) -> str:
         if 'enum' in self.fields.keys():
@@ -205,9 +207,9 @@ class SchemaClassBuilder(ABC):
             property_dict = properties[property_name]
             is_required = property_name in required_property_names
 
-            property_type, default_value = self.__parse_property_type(property_name, property_dict)
+            property_type, default_value, is_deprecated = self.__parse_property_type(property_name, property_dict)
 
-            self.attributes.append(self.build_attribute_code(property_name, property_type, is_required, default_value))
+            self.attributes.append(self.build_attribute_code(property_name, property_type, is_required, default_value, is_deprecated))
 
         return self.jinja_env.get_template(f'{self.template_name}.jinja').render(
             name=self.name,
