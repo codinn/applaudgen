@@ -2,10 +2,21 @@
 
 `applaudgen` parses [App Store Connect specification file](https://developer.apple.com/sample-code/app-store-connect/app-store-connect-openapi-specification.zip) and generates client library for accessing [App Store Connect API](https://developer.apple.com/documentation/appstoreconnectapi).
 
+For the generated Python client library, navigate to [applaud](https://github.com/codinn/applaud).
+
+## Motivation
+
+At [Codinn](https://codinn.com), we have two apps distribute on App Store – [Core Shell](https://apps.apple.com/cn/app/core-shell/id1354319581?l=en&mt=12) and [Core Tunnel](https://apps.apple.com/cn/app/core-tunnel/id1354318707?l=en&mt=12). We wrote a bunch of scripts to automate the build, package and upload processes, we benefit from the automation scripts and it saves a lot of time.
+
+For the app information (localized descriptions, versions, changelogs and other meta data) in App Store, we maintained it manually for a very long time. But this can easily go wrong, we made a few horrible mistakes while updating the information, e.g., pasted the description of Core Shell to Core Tunnel, using Spanish changelog for English localization, forgot update site links.
+
+We decided to adopt App Store Connect API to automate app information updating process as well, but soon discovered that it lacks client support. Most client libraries implement a very small portion of the API, provide very limited operations.
+
+We surprisingly found that App Store Connect API uses and conforms to OpenAPI specification, it shouldn't be too hard to generate client code from the specification. So we create project `applaudgen` for this purpose, and its masterpiece – project [applaud](https://github.com/codinn/applaud).
+
 ## Prerequisites
 
 This project is written in Python, and uses [Poetry](https://python-poetry.org/) for packaging and dependency management. You should have [Poetry installed](https://python-poetry.org/docs/#installation) if you want to contribute to the Python code in this repository.
-
 
 ## Usage
 
