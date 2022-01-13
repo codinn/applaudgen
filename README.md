@@ -74,7 +74,9 @@ class UserUpdateRequest(ApplaudModel):
 A common pitfall of generic OpenAPI client generators is rigid, inflexible. Take an example, [`ErrorResponse`](https://developer.apple.com/documentation/appstoreconnectapi/errorresponse) is a schema of course, `applaudgen` wraps it into an exception for you without write extra code:
 
 ```python
-connection = ApplaudConnection(APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY)
+from applaud.connection import Connection
+
+connection = Connection(APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY)
 
 try:
     response = connection.beta_tester_invitation_list().create(…)
@@ -95,7 +97,9 @@ You always get a correct response on success, or an exception otherwise.
 
 Further more, `applaudgen` provides full function yet simple interfaces to perform tasks on App Store Connect:
 ```python
-connection = ApplaudConnection(APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY)
+from applaud.connection import Connection
+
+connection = Connection(APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY)
 response = connection.beta_group_list().filter(app=[app_id1, app_id2], name="Example Tester Group", is_internal_group=False).include(BetaGroupListEndpoint.Include.APP).get()
 
 for group in beta_groups.data:
