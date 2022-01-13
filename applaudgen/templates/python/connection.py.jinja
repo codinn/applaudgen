@@ -33,9 +33,7 @@ class Connection:
         self.__gen_auth_header()
 
     def __gen_auth_header(self):
-        # Creates a token that lives for 20 minutes, which should be long enough
-        # to upload the app preview. In a long-running script, adjust the code to
-        # issue a new token periodically.
+        # Creates a token that lives for 20 minutes
         self._auth_header_timestamp = datetime.datetime.utcnow()
         expiry = datetime.datetime.utcnow() + datetime.timedelta(minutes=20)
 
