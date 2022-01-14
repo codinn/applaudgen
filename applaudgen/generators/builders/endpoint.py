@@ -1,8 +1,14 @@
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 from typing import Any
 from jinja2 import environment
 from dataclasses import dataclass, field
 from ..utils import *
+
+class EndpointType(Enum):
+    ROOT = auto()
+    LINKAGE = auto()
+    LEAF = auto()
 
 ### Connection().user(id=xxx).filter(appCategories=[], ...).field(...).get()
 
@@ -57,46 +63,46 @@ class EndpointClassBuilder(ABC):
     }
 
     _filter_enum_map = {
-        'AppCategoryListEndpoint.platforms'                 : 'Platform',
-        'AppEncryptionDeclarationListEndpoint.platform'     : 'Platform',
-        'AppListEndpoint.appStoreVersions.appStoreState'    : 'AppStoreVersionState',
-        'AppListEndpoint.appStoreVersions.platform'         : 'Platform',
-        'BetaAppReviewSubmissionListEndpoint.betaReviewState': 'BetaReviewState',
-        'BetaTesterListEndpoint.inviteType'                 : 'BetaInviteType',
-        'BuildListEndpoint.betaAppReviewSubmission.betaReviewState': 'BetaReviewState',
-        'BuildListEndpoint.buildAudienceType'               : 'BuildAudienceType',
-        'BuildListEndpoint.preReleaseVersion.platform'      : 'Platform',
-        'BuildListEndpoint.processingState'                 : 'BuildProcessingState',
-        'BundleIdListEndpoint.platform'                     : 'BundleIdPlatform',
-        'CertificateListEndpoint.certificateType'           : 'CertificateType',
-        'CiProductListEndpoint.productType'                 : 'CiProductType',
-        'DeviceListEndpoint.platform'                       : 'BundleIdPlatform',
-        'DeviceListEndpoint.status'                         : 'DeviceStatus',
-        'PreReleaseVersionListEndpoint.builds.processingState': 'BuildProcessingState',
-        'PreReleaseVersionListEndpoint.platform'            : 'Platform',
-        'ProfileListEndpoint.profileState'                  : 'ProfileState',
-        'ProfileListEndpoint.profileType'                   : 'ProfileType',
-        'UserInvitationListEndpoint.roles'                  : 'UserRole',
-        'UserListEndpoint.roles'                            : 'UserRole',
-        'AppClipAdvancedExperienceListOfAppClipEndpoint.action' : 'AppClipAction',
-        'AppClipAdvancedExperienceListOfAppClipEndpoint.placeStatus': 'AppClipAdvancedExperiencePlaceStatus',
-        'AppClipAdvancedExperienceListOfAppClipEndpoint.status' : 'AppClipAdvancedExperienceStatus',
-        'AppPreviewSetListOfAppStoreVersionLocalizationEndpoint.previewType': 'PreviewType',
-        'AppScreenshotSetListOfAppStoreVersionLocalizationEndpoint.screenshotDisplayType': 'ScreenshotDisplayType',
-        'AppStoreVersionListOfAppEndpoint.appStoreState':       'AppStoreVersionState',
-        'AppStoreVersionListOfAppEndpoint.platform':             'Platform',
-        'GameCenterEnabledVersionListOfAppEndpoint.platform':    'Platform',
-        'InAppPurchaseListOfAppEndpoint.inAppPurchaseType':      'InAppPurchaseType',
-        'PerfPowerMetricListOfAppEndpoint.metricType':           'PerfPowerMetricType',
-        'DiagnosticSignatureListOfBuildEndpoint.diagnosticType': 'DiagnosticType',
-        'PerfPowerMetricListOfBuildEndpoint.metricType':         'PerfPowerMetricType',
-        'BuildListOfCiBuildRunEndpoint.betaAppReviewSubmission.betaReviewState': 'BetaReviewState',
-        'BuildListOfCiBuildRunEndpoint.buildAudienceType':       'BuildAudienceType',
-        'BuildListOfCiBuildRunEndpoint.preReleaseVersion.platform': 'Platform',
-        'BuildListOfCiBuildRunEndpoint.processingState':         'BuildProcessingState',
-        'CompatibleVersionListOfGameCenterEnabledVersionEndpoint.platform': 'Platform',
-        'PerfPowerMetricListOfAppEndpoint.platform':             'PerfPowerMetricPlatform',
-        'PerfPowerMetricListOfBuildEndpoint.platform':           'PerfPowerMetricPlatform',
+        'AppCategoriesEndpoint.platforms'                   : 'Platform',
+        'AppEncryptionDeclarationsEndpoint.platform'     : 'Platform',
+        'AppsEndpoint.appStoreVersions.appStoreState'    : 'AppStoreVersionState',
+        'AppsEndpoint.appStoreVersions.platform'         : 'Platform',
+        'BetaAppReviewSubmissionsEndpoint.betaReviewState': 'BetaReviewState',
+        'BetaTestersEndpoint.inviteType'                 : 'BetaInviteType',
+        'BuildsEndpoint.betaAppReviewSubmission.betaReviewState': 'BetaReviewState',
+        'BuildsEndpoint.buildAudienceType'               : 'BuildAudienceType',
+        'BuildsEndpoint.preReleaseVersion.platform'      : 'Platform',
+        'BuildsEndpoint.processingState'                 : 'BuildProcessingState',
+        'BundleIdsEndpoint.platform'                     : 'BundleIdPlatform',
+        'CertificatesEndpoint.certificateType'           : 'CertificateType',
+        'CiProductsEndpoint.productType'                 : 'CiProductType',
+        'DevicesEndpoint.platform'                       : 'BundleIdPlatform',
+        'DevicesEndpoint.status'                         : 'DeviceStatus',
+        'PreReleaseVersionsEndpoint.builds.processingState': 'BuildProcessingState',
+        'PreReleaseVersionsEndpoint.platform'            : 'Platform',
+        'ProfilesEndpoint.profileState'                  : 'ProfileState',
+        'ProfilesEndpoint.profileType'                   : 'ProfileType',
+        'UserInvitationsEndpoint.roles'                  : 'UserRole',
+        'UsersEndpoint.roles'                            : 'UserRole',
+        'AppClipAdvancedExperiencesOfAppClipEndpoint.action' : 'AppClipAction',
+        'AppClipAdvancedExperiencesOfAppClipEndpoint.placeStatus': 'AppClipAdvancedExperiencePlaceStatus',
+        'AppClipAdvancedExperiencesOfAppClipEndpoint.status' : 'AppClipAdvancedExperienceStatus',
+        'AppPreviewSetsOfAppStoreVersionLocalizationEndpoint.previewType': 'PreviewType',
+        'AppScreenshotSetsOfAppStoreVersionLocalizationEndpoint.screenshotDisplayType': 'ScreenshotDisplayType',
+        'AppStoreVersionsOfAppEndpoint.appStoreState':       'AppStoreVersionState',
+        'AppStoreVersionsOfAppEndpoint.platform':             'Platform',
+        'GameCenterEnabledVersionsOfAppEndpoint.platform':    'Platform',
+        'InAppPurchasesOfAppEndpoint.inAppPurchaseType':      'InAppPurchaseType',
+        'PerfPowerMetricsOfAppEndpoint.metricType':           'PerfPowerMetricType',
+        'DiagnosticSignaturesOfBuildEndpoint.diagnosticType': 'DiagnosticType',
+        'PerfPowerMetricsOfBuildEndpoint.metricType':         'PerfPowerMetricType',
+        'BuildsOfCiBuildRunEndpoint.betaAppReviewSubmission.betaReviewState': 'BetaReviewState',
+        'BuildsOfCiBuildRunEndpoint.buildAudienceType':       'BuildAudienceType',
+        'BuildsOfCiBuildRunEndpoint.preReleaseVersion.platform': 'Platform',
+        'BuildsOfCiBuildRunEndpoint.processingState':         'BuildProcessingState',
+        'CompatibleVersionsOfGameCenterEnabledVersionEndpoint.platform': 'Platform',
+        'PerfPowerMetricsOfAppEndpoint.platform':             'PerfPowerMetricPlatform',
+        'PerfPowerMetricsOfBuildEndpoint.platform':           'PerfPowerMetricPlatform',
     }
     
     @abstractmethod
@@ -130,7 +136,6 @@ class EndpointClassBuilder(ABC):
         self.info = info
         self.jinja_env = jinja_env
         self.has_id_param = False
-        self.is_relationship = False
         self.operation_get = None
         self.fields_enums = {}
         self.fields_function_code: str = None
@@ -142,61 +147,65 @@ class EndpointClassBuilder(ABC):
         self.include_names = []
         self.operation_get: self.GetOperation = None
         self.enums = {}
-
-        # Eample path: /v1/users/{id}/relationships/visibleApps
-        path_comp = path.split('/')
+        self.endpoint_type = EndpointType.ROOT
+        self.tags: list[str] = []
         
+        self.leaf_endpoints: list[EndpointClassBuilder] = []
+        self.linkage_endpoints: list[EndpointClassBuilder] = []
+
+        # Example path: /v1/users/{id}/relationships/visibleApps
+        path_comp = self.path.split('/')
+        
+        # root name: users
         root_endpoint_name = path_comp[2]
         assert root_endpoint_name.endswith('s'), f'Invalid root endpoint ({root_endpoint_name}) in path {path}'
 
-        self.parent_class_name = None
-
         if '{id}' in path_comp:
-            self.__parse_parameters(path, info['parameters'])
-
-            method = simple_singular(root_endpoint_name)
-            class_name = capfirst(method)
-
-            self.params = [{'name': 'id', 'type': 'str'}]
-
+            self.__parse_parameters(info['parameters'])
+    
             if path_comp[-1] == '{id}':
                 # /v1/users/{id}
-                pass
+                self.endpoint_type = EndpointType.ROOT
+                # user(id: str)
+                self.params = [{'name': 'id', 'type': 'str'}]
+                # user()
+                self.method = simple_singular(root_endpoint_name)
+                self.class_name = simple_singular(root_endpoint_name)
             else:
                 # /v1/users/{id}/relationships/visibleApps or /v1/users/{id}/visibleApps
                 assert len(path_comp) == 6 and 'relationships' in path_comp or len(path_comp) == 5,\
                         f'Invalid path ({path}) in path {path}'
-
-                self.parent_class_name = class_name
-
+                
                 # visibleApps
                 child_endpoint_name = path_comp[-1]
 
-                if child_endpoint_name.endswith('s'):
-                    # visibleApps -> visibleAppList
-                    method = simple_singular(child_endpoint_name) + 'List'
-                else:
-                    method = child_endpoint_name
-
-                # VisibleAppListOfUser
-                class_name = f'{capfirst(method)}Of{class_name}'
-
                 if path_comp[-2] == 'relationships':
-                    self.is_relationship = True
-                    # VisibleAppOfUserRelationships
-                    class_name = f'{class_name}Relationships'
-
-                method = simple_singular(class_name)
+                    self.endpoint_type = EndpointType.LINKAGE
+                    # visibleAppsLinkages()
+                    self.method = child_endpoint_name + ('Linkages' if child_endpoint_name.endswith('s') else 'Linkage')
+                    # visibleAppsLinkagesOfUser
+                    self.class_name = self.method + 'Of' + capfirst(simple_singular(root_endpoint_name))
+                else:
+                    self.endpoint_type = EndpointType.LEAF
+                    # visibleApps()
+                    self.method = child_endpoint_name
+                    # visibleAppsOfUser
+                    self.class_name = child_endpoint_name + 'Of' + capfirst(simple_singular(root_endpoint_name))
         else:
-            assert 'parameters' not in info, f"Can't have parameters in path {path}"
-            method = simple_singular(root_endpoint_name) + 'List'
-            class_name = capfirst(method)
+            # /v1/users, root endpoint
+            self.endpoint_type = EndpointType.ROOT
+            assert 'parameters' not in info, f"Can't have parameters in root path {path}"
+            # users
+            self.method = root_endpoint_name
+            self.class_name = root_endpoint_name
 
-        self.class_name = class_name + 'Endpoint'
-        self.method = method
+        # UsersEndpoint, UserVisibileAppsEndpoint, UserVisibleAppsLinkageEndpoint
+        self.class_name = capfirst(self.class_name) + 'Endpoint'
 
         if 'get' in info:
             info_get = info['get']
+            self.__parse_tags('get', info_get)
+
             assert all(subkey in ['parameters', 'responses', 'tags', 'operationId', 'deprecated'] for subkey in info_get.keys()), f'Invalid keys in operation `get` in path {self.path}'
             assert '200' in info_get['responses'], f'Get operation must have 200 response in path {self.path}'
 
@@ -206,6 +215,8 @@ class EndpointClassBuilder(ABC):
 
         if 'post' in info:
             info_post = info['post']
+            self.__parse_tags('post', info_post)
+
             assert all(subkey in ['requestBody', 'responses', 'tags', 'operationId', 'deprecated'] for subkey in info_post.keys()), f'Invalid keys in operation `post` in path {self.path}'
             assert '201' in info_post['responses'] or '204' in info_post['responses'], f'Post operation must have 201 or 204 response in path {self.path}'
 
@@ -215,6 +226,8 @@ class EndpointClassBuilder(ABC):
 
         if 'patch' in info:
             info_patch = info['patch']
+            self.__parse_tags('patch', info_patch)
+
             assert all(subkey in ['requestBody', 'responses', 'tags', 'operationId', 'deprecated'] for subkey in info_patch.keys()), f'Invalid keys in operation `patch` in path {self.path}'
             assert '200' in info_patch['responses'] or '204' in info_patch['responses'], f'Patch operation must have 200 or 204 response in path {self.path}'
 
@@ -224,6 +237,7 @@ class EndpointClassBuilder(ABC):
 
         if 'delete' in info:
             info_delete = info['delete']
+            self.__parse_tags('delete', info_delete)
 
             assert all(subkey in ['requestBody', 'responses', 'tags', 'operationId', 'deprecated'] for subkey in info_delete.keys()), f'Invalid keys in operation `delete` in path {self.path}'
 
@@ -237,11 +251,16 @@ class EndpointClassBuilder(ABC):
                 deprecated, response_type, response_single_instance, response_comment = self.__parse_operation_responses('delete', info_delete)
                 self.operation_delete = self.DeleteOperation(deprecated, request_type, request_single_instance, request_comment)
 
-    def __parse_parameters(self, path, params_info: dict):
-        assert len(params_info) == 1, f'Invalid number of parameters in path {path}'
+    def __parse_tags(self, operation_name: str, operation_info: dict):
+        assert 'tags' in operation_info, f'Missing tag in operation {operation_name} in path {path}'
+        assert len(operation_info['tags']) == 1, f'Multiple tags in operation {operation_name} in path {path}'
+        self.tags.append(operation_info['tags'][0])
+
+    def __parse_parameters(self, params_info: dict):
+        assert len(params_info) == 1, f'Invalid number of parameters in path {self.path}'
         param = params_info[0]
 
-        assert param['in'] == 'path' and param['name'] == 'id' and param['style'] == 'simple' and param['required'] == True and param['schema']['type'] == 'string', f'Invalid parameter in path {path}'
+        assert param['in'] == 'path' and param['name'] == 'id' and param['style'] == 'simple' and param['required'] == True and param['schema']['type'] == 'string', f'Invalid parameter in path {self.path}'
 
         self.has_id_param = True
     
@@ -437,7 +456,7 @@ class EndpointClassBuilder(ABC):
         if 'enum' in info['schema']['items']:
             filter_trace = f'{self.class_name}.{filter_name}'
 
-            if filter_trace in ['FinanceReportListEndpoint.reportType', 'SalesReportListEndpoint.frequency', 'SalesReportListEndpoint.reportType', 'SalesReportListEndpoint.reportSubType']:
+            if filter_trace in ['FinanceReportsEndpoint.reportType', 'SalesReportsEndpoint.frequency', 'SalesReportsEndpoint.reportType', 'SalesReportsEndpoint.reportSubType']:
                 # Embeds enums of those filters
                 filter_item_type = capfirst(filter_name)
                 self.enums[filter_item_type] = info['schema']['items']['enum']

@@ -67,8 +67,9 @@ class Connection:
 
     # Shortcuts for root endpoints
 
-{% for res in endpoints %}
-    def {{ res.method|snake_case }}(self {{- expand_params(res.params) }}) -> {{ res.class_name }}:
-        return {{ res.class_name }}({{- pass_params(res.params) }})
+{% for endpoint in endpoints %}
+    @endpoint('{{ endpoint.path }}')
+    def {{ endpoint.method|snake_case }}(self {{- expand_params(endpoint.params) }}) -> {{ endpoint.class_name }}:
+        return {{ endpoint.class_name }}({{- pass_params(endpoint.params) }})
     
 {% endfor %}

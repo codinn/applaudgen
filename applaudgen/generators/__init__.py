@@ -7,7 +7,7 @@ import orjson, os
 from typing import Any
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from .builders.schema import SchemaClassBuilder
-from .builders.endpoint import EndpointClassBuilder
+from .builders.endpoint import EndpointClassBuilder, EndpointType
 from .utils import *
 
 class SDKGenerator(ABC):
@@ -55,44 +55,91 @@ class SDKGenerator(ABC):
         not_allowed_operations = ['put', 'options', 'head', 'trace']
         allowed_operations = ['get', 'post', 'delete', 'patch']
 
-        endpoints = []
+        root_endpoints: list[EndpointClassBuilder] = []
+        leaf_endpoints: list[EndpointClassBuilder] = []
+        linkage_endpoints: list[EndpointClassBuilder] = []
         endpoints_grouped_by_tag = {}
+
+        def create_and_add_dummy_root(dummy_path: str, child: EndpointClassBuilder, leaf: bool):
+            dummy = self.create_dummy_endpoint(dummy_path)
+            dummy.leaf_endpoints.append(child) if leaf else dummy.linkage_endpoints.append(child)
+            tag = child.tags[0]
+
+            root_endpoints.append(dummy)
+            endpoints_grouped_by_tag[tag] = endpoints_grouped_by_tag.get(tag, []) + [dummy]
+            
+
         for path, spec in paths.items():
             assert all(key not in not_allowed_operations for key in spec.keys()), f'Contains unknown operation method ({spec.keys()}) in path {path}'
-
-            # Skip paths that do not have any allowed operations
-            if all(key not in allowed_operations for key in spec.keys()):
-                continue
             
             # Only 'get', 'post', 'delete', 'patch' and 'parameters' are handled
             assert all(key in allowed_operations + ['parameters'] for key in spec.keys()), f'Contains unknown key ({spec.keys()}) in path {path}'
 
-            endpoint = self.endpoint_class_builder_class(self.jinja_env, path, spec)
-            endpoints.append(endpoint)
+            endpoint: EndpointClassBuilder = self.endpoint_class_builder_class(self.jinja_env, path, spec)
 
-            tag: str = None
-            for operation in allowed_operations:
-                if operation not in spec.keys():
-                    continue
+            # Skip paths that do not have any allowed operations
+            if all(key not in allowed_operations for key in spec.keys()):
+                print(f'Found dummy endpoint {path}')
+                tag = 'dummy'
+            else:
+                if endpoint.endpoint_type == EndpointType.ROOT:
+                    root_endpoints.append(endpoint)
+                elif endpoint.endpoint_type == EndpointType.LEAF:
+                    leaf_endpoints.append(endpoint)
+                elif endpoint.endpoint_type == EndpointType.LINKAGE:
+                    linkage_endpoints.append(endpoint)
+                else:
+                    raise ValueError(f'Unknown endpoint type {endpoint.endpoint_type}')
 
-                operation_spec = spec[operation]
-                assert 'tags' in operation_spec, f'Missing tag in operation {operation} in path {path}'
-                assert len(operation_spec['tags']) == 1, f'Multiple tags in operation {operation} in path {path}'
-                tag = operation_spec['tags'][0]
-                break
+                tag = endpoint.tags[0]
 
             endpoints_grouped_by_tag[tag] = endpoints_grouped_by_tag.get(tag, []) + [endpoint]
 
-        # Generate Endpoint Fields
+        for leaf_endpoint in leaf_endpoints:
+            root_endpoint = next(iter(filter(lambda root: leaf_endpoint.path.startswith(root.path) and root.has_id_param, root_endpoints)), None)
+
+            if not root_endpoint:
+                dumy_path = '/'.join(leaf_endpoint.path.split('/')[:4])
+                print(f'Missing id endpoint for leaf endpoint {leaf_endpoint.path}, create dummy id endpoint {dumy_path}')
+                create_and_add_dummy_root(dumy_path, leaf_endpoint, True)
+            else:
+                root_endpoint.leaf_endpoints.append(leaf_endpoint)
+
+        for linkage_endpoint in linkage_endpoints:
+            root_endpoint = next(iter(filter(lambda root: linkage_endpoint.path.startswith(root.path) and root.has_id_param, root_endpoints)), None)
+
+            if not root_endpoint:
+                dumy_path = '/'.join(linkage_endpoint.path.split('/')[:4])
+                print(f'Missing id endpoint for linkage endpoint {linkage_endpoint.path}, create dummy id endpoint {dumy_path}')
+                create_and_add_dummy_root(dumy_path, leaf_endpoint, False)
+            else:
+                root_endpoint.linkage_endpoints.append(linkage_endpoint)
+
+        # Generate Endpoint Field enums
         all_fields_enums = {}
-        for endpoint in endpoints:
+        for endpoint in root_endpoints + leaf_endpoints + linkage_endpoints:
             for name, value in endpoint.fields_enums.items():
                 if name in all_fields_enums:
                     assert all_fields_enums[name] == value, f'Field {name} is defined twice with different values'
                 else:
                     all_fields_enums[name] = value
 
-        return endpoints, endpoints_grouped_by_tag, all_fields_enums
+        return root_endpoints, endpoints_grouped_by_tag, all_fields_enums
+
+    def create_dummy_endpoint(self, path: str) -> EndpointClassBuilder:
+        spec = {
+            "parameters" : [ {
+                "name" : "id",
+                "in" : "path",
+                "description" : "the id of the requested resource",
+                "schema" : {
+                "type" : "string"
+                },
+                "style" : "simple",
+                "required" : True
+            } ]
+        }
+        return self.endpoint_class_builder_class(self.jinja_env, path, spec)
 
     def generate(self):
         enums = {}

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .base import Endpoint, IDEndpoint, SortOrder
+from .base import Endpoint, IDEndpoint, SortOrder, endpoint
 from ..fields import *
 from typing import Union
 from pydantic import parse_obj_as
@@ -18,7 +18,21 @@ from ..schemas.enums import *
 class {{endpoint.class_name}}({% if endpoint.has_id_param %}IDEndpoint{% else %}Endpoint{% endif %}):
     path = '{{endpoint.path}}'
 
-    {% if endpoint.enums|count > 0 %}
+    {% for leaf in endpoint.leaf_endpoints %}
+    @endpoint('{{ leaf.path }}')
+    def {{ leaf.method|snake_case }}(self) -> {{ leaf.class_name }}:
+        return {{ leaf.class_name }}(self.id, self.session)
+        
+    {% endfor %}
+
+    {%- for linkage in endpoint.linkage_endpoints %}
+    @endpoint('{{ linkage.path }}')
+    def {{ linkage.method|snake_case }}(self) -> {{ linkage.class_name }}:
+        return {{ linkage.class_name }}(self.id, self.session)
+        
+    {% endfor %}
+
+    {%- if endpoint.enums|count > 0 %}
         {% for name, values in endpoint.enums.items() %}
     class {{name}}(StringEnum):
             {% for value in values %}
