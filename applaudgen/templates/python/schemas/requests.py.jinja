@@ -7,6 +7,11 @@ from .models import *
 from typing import Optional, Literal
 import datetime
 
+class ApplaudRequest(ApplaudModel):
+    
+    def request_dict(self) -> dict:
+       return self.dict(by_alias=True, exclude_none=True)
+
 {% for schema in schemas %}
 {{ schema }}
 {% endfor %}

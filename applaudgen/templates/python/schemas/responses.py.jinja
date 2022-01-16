@@ -7,6 +7,9 @@ from .models import *
 from .requests import *
 from pydantic import Field
 
+class ApplaudResponse(ApplaudModel):
+    pass
+
 {% for schema in schemas %}
 {{ schema }}
 {% endfor %}

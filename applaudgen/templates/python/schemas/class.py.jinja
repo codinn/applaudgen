@@ -1,7 +1,7 @@
 {% if deprecated %}
 @deprecated
 {% endif %}
-class {{ name }}(ApplaudModel):
+class {{ name }}({{ super_class }}):
 {% for subclass in nested_classes %}
     {{ subclass|indent(4) }}
 {% endfor %}

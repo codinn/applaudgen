@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Optional, Union
 from jinja2 import Environment
 from ..utils import *
 
@@ -187,7 +187,7 @@ class SchemaClassBuilder(ABC):
 
             return (property_type, default_value, deprecated)
 
-    def build(self) -> str:
+    def build(self, super_class: Optional[str] = None) -> str:
         if 'enum' in self.fields.keys():
             assert self.fields['type']=='string', "Unkown type in enum!"
             return self.build_enum_code(self.name, self.fields['enum'])
@@ -213,6 +213,7 @@ class SchemaClassBuilder(ABC):
 
         return self.jinja_env.get_template(f'{self.template_name}.jinja').render(
             name=self.name,
+            super_class = super_class if super_class else 'ApplaudModel',
             deprecated=deprecated,
             nested_classes=self.nested_classes,
             nested_enums=self.nested_enums,

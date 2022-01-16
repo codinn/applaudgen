@@ -65,6 +65,9 @@ class Connection:
 
         return self._s
 
+    def generic_endpoint(self, url: str) -> GenericEndpoint:
+        return GenericEndpoint(self.session, url)
+
     # Shortcuts for root endpoints
 
 {% for endpoint in endpoints %}

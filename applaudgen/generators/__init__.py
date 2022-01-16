@@ -4,7 +4,7 @@ from re import template
 from jinja2.environment import Template
 from jinja2.utils import internalcode
 import orjson, os
-from typing import Any
+from typing import Any, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from .builders.schema import SchemaClassBuilder
 from .builders.endpoint import EndpointClassBuilder, EndpointType
@@ -13,8 +13,8 @@ from .utils import *
 class SDKGenerator(ABC):
 
     template_subdir: str
-    schema_class_builder_class: SchemaClassBuilder
-    endpoint_class_builder_class: EndpointClassBuilder
+    schema_class_builder_class: type[SchemaClassBuilder]
+    endpoint_class_builder_class: type[EndpointClassBuilder]
 
     def __init__(self, spec_file: str, output_dir: str):
         with open(spec_file, 'r') as f:
@@ -37,7 +37,7 @@ class SDKGenerator(ABC):
         self.jinja_env.filters["simple_singular"] = simple_singular
         self.jinja_env.add_extension("jinja2.ext.do")
 
-    def build_schemas_code(self, definitions: dict, order_keys: list = [], in_models: bool = False) -> tuple[list, dict]:
+    def build_schemas_code(self, definitions: dict, *, super_class: Optional[str] = None, order_keys: list = [], in_models: bool = False) -> tuple[list, dict]:
         schemas_code = []
         remain_enums = {}
         sorted_keys = order_keys + [key for key in definitions.keys() if key not in order_keys]
@@ -45,7 +45,7 @@ class SDKGenerator(ABC):
         for key in sorted_keys:
             schema = definitions[key]
             class_builder = self.schema_class_builder_class(self.jinja_env, key, schema, in_models)
-            code = class_builder.build()
+            code = class_builder.build(super_class)
             remain_enums.update(class_builder.remain_enums)
             schemas_code.append(code)
 
@@ -172,15 +172,15 @@ class SDKGenerator(ABC):
             else:
                 assert False, f'Unknown type ({value["type"]}) in schemas!'
 
-        request_schemas, request_remain_enums = self.build_schemas_code(requests)
+        request_schemas, request_remain_enums = self.build_schemas_code(requests, super_class='ApplaudRequest')
         self.generate_requests_code(request_schemas)
 
-        response_schemas, response_remain_enums = self.build_schemas_code(responses)
+        response_schemas, response_remain_enums = self.build_schemas_code(responses, super_class='ApplaudResponse')
         self.generate_responses_code(response_schemas)
 
         order_keys = ['ResourceLinks', 'PagingInformation', 'HttpHeader', 'ImageAsset', 'AppMediaStateError', 'AppMediaAssetState', 'UploadOperation', 'Device', 'FileLocation', 'ScmProviderType',
         'CiTagPatterns', 'CiBranchPatterns', 'CiStartConditionFileMatcher', 'CiFilesAndFoldersRule', 'CiTestDestination', 'CiAction', 'CiGitUser', 'CiIssueCounts', 'CapabilityOption', 'CapabilitySetting', 'CiBranchStartCondition', 'CiTagStartCondition', 'CiPullRequestStartCondition', 'CiScheduledStartCondition']
-        model_schemas, model_remain_enums = self.build_schemas_code(models, order_keys, in_models=True)
+        model_schemas, model_remain_enums = self.build_schemas_code(models, order_keys=order_keys, in_models=True)
         self.generate_models_code(model_schemas)
 
         enums.update(request_remain_enums)
