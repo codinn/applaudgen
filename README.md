@@ -79,7 +79,7 @@ from applaud.connection import Connection
 connection = Connection(APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY)
 
 try:
-    response = connection.beta_tester_invitation_list().create(…)
+    response = connection.beta_tester_invitations().create(…)
 except EndpointException as err:
     already_accepted_error = False
     for e in err.errors:
@@ -100,7 +100,7 @@ Further more, `applaudgen` provides full function yet simple interfaces to perfo
 from applaud.connection import Connection
 
 connection = Connection(APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY)
-response = connection.beta_group_list().filter(app=[app_id1, app_id2], name="Example Tester Group", is_internal_group=False).include(BetaGroupListEndpoint.Include.APP).get()
+response = connection.beta_groups().filter(app=[app_id1, app_id2], name="Example Tester Group", is_internal_group=False).include(BetaGroupsEndpoint.Include.APP).get()
 
 for group in beta_groups.data:
     print(group.id, group.attributes.created_date, group.relationships.app.data.id)
