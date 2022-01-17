@@ -45,8 +45,8 @@ Number of included related resources to return.
     '''
     {% if limit_tuples[0][0] == 'default-limit' %}
     if number and number > {{ limit_tuples[0][1] }}:
-        raise ValueError(f'The maximum limit of default-limit is {{ limit_tuples[0][1] }}')
-    if number: self._set_limit('default-limit', number)
+        raise ValueError(f'The maximum limit of number is {{ limit_tuples[0][1] }}')
+    if number: self._set_limit(number)
         {% set limit_tuples = limit_tuples[1:] %}
     
     {% endif %}
@@ -54,8 +54,8 @@ Number of included related resources to return.
     {%- for name, maximum, comment in limit_tuples %}
         {% set var_name = name|snake_case %}
     if {{ var_name }} and {{ var_name }} > {{ maximum }}:
-        raise ValueError(f'The maximum limit is {{ maximum }}')
-    if {{ var_name }}: self._set_limit('{{ name }}', {{ name|snake_case }})
+        raise ValueError(f'The maximum limit of {{ name|snake_case }} is {{ maximum }}')
+    if {{ var_name }}: self._set_limit({{ name|snake_case }}, '{{ name }}')
 
     {% endfor %}
     return self
