@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "applaudgen"
-version = "0.9.1"
+version = "0.9.2"
 description = "SDK generator to the App Store Connect API from Apple."
 authors = ["Yang.Y <yang@yangyubo.com>"]
 readme = "README.md"
