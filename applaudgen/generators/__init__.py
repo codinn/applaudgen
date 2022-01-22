@@ -175,7 +175,7 @@ class SDKGenerator(ABC):
         request_schemas, request_remain_enums = self.build_schemas_code(requests, super_class='ApplaudRequest')
         self.generate_requests_code(request_schemas)
 
-        response_schemas, response_remain_enums = self.build_schemas_code(responses, super_class='ApplaudResponse')
+        response_schemas, response_remain_enums = self.build_schemas_code(responses, super_class='JSONResponse')
         self.generate_responses_code(response_schemas)
 
         order_keys = ['ResourceLinks', 'PagingInformation', 'HttpHeader', 'ImageAsset', 'AppMediaStateError', 'AppMediaAssetState', 'UploadOperation', 'Device', 'FileLocation', 'ScmProviderType',

@@ -360,7 +360,7 @@ class EndpointClassBuilder(ABC):
                     elif 'gzip' in resp['content']:
                         schema = resp['content']['gzip']['schema']
                         assert schema['type'] == 'string' and schema['format'] == 'binary', f'Invalid response in operation {operation_name} in path {self.path}'
-                        response_type = 'bytes'
+                        response_type = 'GzipStreamResponse'
                     else:
                         assert False, f'Invalid response in operation {operation_name} in path {self.path}'
             elif code in ['400', '403', '404', '409']:

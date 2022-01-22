@@ -91,8 +91,12 @@ class {{endpoint.class_name}}({% if endpoint.has_id_param %}IDEndpoint{% else %}
         :raises: :py:class:`applaud.schemas.responses.ErrorResponse`: if a error reponse returned.
                  :py:class:`requests.RequestException`: if a connection or a HTTP error occurred.
         '''
+        {% if op.response_type == 'GzipStreamResponse' or op.response_type == 'GzipResponse' %}
+        return super()._perform_get(stream=True)
+        {% else %}
         json = super()._perform_get()
         return {{op.response_type}}.parse_obj(json)
+        {% endif %}
 
     {% endif -%}
 

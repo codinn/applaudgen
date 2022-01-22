@@ -1,13 +1,83 @@
 {% include 'header.jinja' %}
 
+import requests
 from deprecated import deprecated
-from typing import Union, Optional, Literal
+from typing import Union, Optional, Literal, Iterator
 from .enums import *
 from .models import *
 from .requests import *
 from pydantic import Field
 
-class ApplaudResponse(ApplaudModel):
+class GzipResponse:
+
+    def __init__(self, response: requests.Response):
+        import zlib
+        self.response = response
+
+        self.default_gzip_filename = response.headers.get('x-reports-filename') or response.headers['Content-Disposition'].split('filename=')[1].strip('"')
+            
+        if self.default_gzip_filename.endswith('.gz'):
+            self.default_extract_filename = self.default_gzip_filename[:-3]
+        else:
+            self.default_extract_filename = None
+
+        self._decompressor = zlib.decompressobj(16+zlib.MAX_WBITS)
+
+    def decompress(self) -> bytes:
+        '''Decompresses the gzip content in response.'''
+        return self._decompressor.decompress(self.response.content)
+
+    def save(self, filename: Optional[str]=None, *, decompress: bool=False):
+        '''Saves or extracts the gzip content to a file.
+
+        :param filename: the filename to save to. If not specified, the filename will be the value of the  `x-reports-filename` or `Content-Disposition` header.
+        :type filename: str = None
+        :param decompress: if True, the content will be extracted to a file. If False, the content will be saved to a file.
+        '''
+        filename = filename or (self.default_extract_filename if decompress else self.default_gzip_filename)
+
+        with open(filename, 'wb') as out:
+            if decompress:
+                out.write(self._decompressor.decompress(self.response.content))
+            else:
+                out.write(self.response.content)
+
+class GzipStreamResponse(GzipResponse):
+
+    CHUNKSIZE: int = 1024
+
+    def iter_decompress(self, chunk_size: Optional[int]=None) -> Iterator[bytes]:
+        '''Iterates over the response data and decompress it.
+
+        :param chunk_size: the size of the chunks to yield. chunk_size must be of type int or None. If chunk_size is None, the default value of GzipStreamResponse.CHUNKSIZE will be used.
+        :type chunk_size: int = None
+        '''
+        while True:
+            data = self.response.raw.read(chunk_size or self.CHUNKSIZE)
+            if not data:
+                yield self._decompressor.flush()
+                break
+
+            yield self._decompressor.decompress(data)
+
+    def save(self, filename: Optional[str]=None, *, decompress: bool=False):
+        '''Saves or extracts the gzip content to a file.
+
+        :param filename: the filename to save to. If not specified, the filename will be the value of the  `x-reports-filename` or `Content-Disposition` header.
+        :type filename: str = None
+        :param decompress: if True, the content will be extracted to a file. If False, the content will be saved to a file.
+        '''
+        filename = filename or (self.default_extract_filename if decompress else self.default_gzip_filename)
+
+        with open(filename, 'wb') as out:
+            if decompress:
+                for decompressed in self.iter_decompress(self.CHUNKSIZE):
+                    out.write(decompressed)
+            else:
+                for chunk in self.response.iter_content(self.CHUNKSIZE):
+                    out.write(chunk)
+
+class JSONResponse(ApplaudModel):
     pass
 
 {% for schema in schemas %}
